@@ -22,6 +22,7 @@ import { User as DbUser } from 'src/generated/prisma/client';
 import { OffsetPaginationArgs } from 'src/types/input-types.args';
 import { GetUserWorkspacesResponse } from 'src/infra-token/request-response.dto';
 import { TeamAccessRole } from 'src/team/team.model';
+import { syncGravatar } from './gravatar';
 
 @Injectable()
 export class UserService {
@@ -127,7 +128,7 @@ export class UserService {
         },
       });
 
-      return E.right(user);
+      return E.right(await syncGravatar(this.prisma, user));
     } catch (error) {
       return E.left(USER_NOT_FOUND);
     }

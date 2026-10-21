@@ -225,6 +225,62 @@ describe('UserService', () => {
     });
   });
 
+  describe('updateUserRefreshToken', () => {
+    const gravatar =
+      'https://gravatar.com/avatar/aa89ecce310d175be592e440a1b1461ec297675bcb75674c52baecbb3525b720?s=256&d=mp';
+
+    test('should set Gravatar when photoURL is empty', async () => {
+      mockPrisma.user.update.mockResolvedValueOnce({ ...user, photoURL: null });
+      mockPrisma.user.update.mockResolvedValueOnce({
+        ...user,
+        photoURL: gravatar,
+      });
+
+      const result = await userService.updateUserRefreshToken('hash', user.uid);
+      expect(result).toEqualRight({ ...user, photoURL: gravatar });
+      expect(mockPrisma.user.update).toHaveBeenLastCalledWith({
+        where: { uid: user.uid },
+        data: { photoURL: gravatar },
+      });
+    });
+
+    test('should recompute stale Gravatar photoURL', async () => {
+      mockPrisma.user.update.mockResolvedValueOnce({
+        ...user,
+        photoURL: 'https://gravatar.com/avatar/old?s=256&d=mp',
+      });
+      mockPrisma.user.update.mockResolvedValueOnce({
+        ...user,
+        photoURL: gravatar,
+      });
+
+      await userService.updateUserRefreshToken('hash', user.uid);
+      expect(mockPrisma.user.update).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.user.update).toHaveBeenLastCalledWith({
+        where: { uid: user.uid },
+        data: { photoURL: gravatar },
+      });
+    });
+
+    test('should not write when Gravatar photoURL is up to date', async () => {
+      mockPrisma.user.update.mockResolvedValueOnce({
+        ...user,
+        photoURL: gravatar,
+      });
+
+      await userService.updateUserRefreshToken('hash', user.uid);
+      expect(mockPrisma.user.update).toHaveBeenCalledTimes(1);
+    });
+
+    test('should keep photoURL set by OAuth provider', async () => {
+      mockPrisma.user.update.mockResolvedValueOnce(user);
+
+      const result = await userService.updateUserRefreshToken('hash', user.uid);
+      expect(result).toEqualRight(user);
+      expect(mockPrisma.user.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('createUserViaMagicLink', () => {
     test('should successfully create user and account for magic-link given valid inputs', async () => {
       mockPrisma.user.create.mockResolvedValueOnce(user);
