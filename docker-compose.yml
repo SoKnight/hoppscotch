@@ -97,6 +97,7 @@ services:
     profiles: ["default"]
     container_name: hoppscotch-aio
     restart: unless-stopped
+    image: ghcr.io/soknight/hoppscotch:latest-patched
     build:
       dockerfile: prod.Dockerfile
       context: .
@@ -118,6 +119,7 @@ services:
     profiles: ["default-no-db"]
     container_name: hoppscotch-aio
     restart: unless-stopped
+    image: ghcr.io/soknight/hoppscotch:latest-patched
     build:
       dockerfile: prod.Dockerfile
       context: .
@@ -168,10 +170,7 @@ services:
   # Auto-migration service - handles database migrations automatically
   hoppscotch-migrate:
     profiles: ["default", "just-backend", "backend", "app", "admin"]
-    build:
-      dockerfile: prod.Dockerfile
-      context: .
-      target: backend
+    image: ghcr.io/soknight/hoppscotch:latest-patched
     env_file:
       - ./.env
     depends_on:
